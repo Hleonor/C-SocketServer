@@ -69,7 +69,7 @@ int MY_SOCKET::acceptSocket()
         cout << endl;
         return -1;
     }
-    cout << "客户端连接成功, 客户端信息: " << inet_ntoa(client_addr.sin_addr)
+    cout << "客户端连接成功, 客户端信息: " << inet_ntoa(client_addr.sin_addr) << " ==>> 对应套接字为" << the_client_sock
          << endl; // inet_ntoa函数将网络字节序IP地址转换为字符串
     cout << endl;
     return the_client_sock;
@@ -96,34 +96,104 @@ void MY_SOCKET::watchConnecting()
 {
     try
     {
+        // 设置监听读写文件描述符
+        fd_set readfds;
+        fd_set writefds;
+        timeval timeout;
+        timeout.tv_sec = 30;
+        timeout.tv_usec = 0;
+        FD_ZERO(&readfds);
+        FD_ZERO(&writefds);
+        FD_SET(serv_sock, &readfds); // 将套接字加入到读写文件描述符中，此处是监听套接字
+        FD_SET(serv_sock, &writefds);
         while (true)
         {
-            int the_client_sock = acceptSocket();
-            if (the_client_sock == -1)
+            /**
+             * 需要说明的，第三个参数是写入文件描述符，此处如果将写入文件描述符也加入select函数中，
+             * 那么当准备从一个客户端对应的套接字(fd)读入数据的时候，它被select检查为可读，而不是可写的，所以会造成一直阻塞，
+             * 从而无法读也无法写，所以此处只加入读文件描述符，在往从客户端对应的套接字读数据的时候直接写入时间信息并发送即可。
+             */
+            int ret = select(0, &readfds, NULL, NULL, NULL);
+            if (ret == -1)
             {
-                cout << "acceptSocket error" << endl;
+                cout << "select函数出错" << endl;
                 cout << endl;
                 return;
             }
-            client_sock_vector.push_back(the_client_sock);
-            // 向客户端发送信息，不用创建发送线程，直接发送即可
-            // 发送本机时间
-            char *server_send;
-            time_t now = time(0);
-            server_send = ctime(&now);
-            if (send(the_client_sock, server_send, strlen(server_send) + 1 + sizeof(char), 0) == SOCKET_ERROR)
+            else if (ret == 0)
             {
-                cout << "发送失败" << endl;
+                cout << "30s内，没有一个fd准备好读写操作" << endl;
                 cout << endl;
+                continue;
             }
             else
             {
-                cout << "发送成功" << endl;
-                cout << endl;
+                if (FD_ISSET(serv_sock, &readfds)) // 如果是倾听套接字就绪，说明一个新的连接请求建立
+                {
+                    int client_sock = acceptSocket();
+                    if (client_sock == -1)
+                    {
+                        cout << "acceptSocket接收连接出错" << endl;
+                        cout << endl;
+                        return;
+                    }
+                    // 加入到监听文件描述符中去；
+                    FD_SET(client_sock, &readfds);
+                    FD_SET(client_sock, &writefds);
+
+                    client_sock_vector.push_back(client_sock);
+                }
+                else
+                {
+                    // 如果是客户端套接字就绪，说明客户端有数据发送过来
+                    for (int i = 0; i < client_sock_vector.size(); i++)
+                    {
+                        if (FD_ISSET(client_sock_vector[i], &readfds))
+                        {
+                            if (FD_ISSET(client_sock_vector[i], &writefds))
+                            {
+                                char *server_send;
+                                ::time_t now = time(0);
+                                string temp = "当前服务器系统时间为: " + string(ctime(&now));
+                                server_send = temp.data();
+                                if (send(client_sock_vector[i], server_send, strlen(server_send) + 1 + sizeof(char),
+                                         0) ==
+                                    SOCKET_ERROR)
+                                {
+                                    cout << "发送失败" << endl;
+                                    cout << endl;
+                                }
+                                else
+                                {
+                                    cout << "发送成功" << endl;
+                                    cout << endl;
+                                }
+                            }
+                            // 发送结束后，监听客户端发送的数据
+                            char recv_buf[1024];
+                            int recv_len = recv(client_sock_vector[i], recv_buf, sizeof(recv_buf), 0);
+                            if (recv_len == -1)
+                            {
+                                cout << "recv error" << endl;
+                                cout << endl;
+                                return;
+                            }
+                            else if (recv_len == 0)
+                            {
+                                cout << "客户端已经关闭" << endl;
+                                cout << endl;
+                                closesocket(i);
+                                FD_CLR(i, &readfds);
+                            }
+                            else
+                            {
+                                cout << "客户端 " << client_sock_vector[i] << " 发送的数据: " << recv_buf << endl;
+                                cout << endl;
+                            }
+                        }
+                    }
+                }
             }
-            // 发送结束后，进入监听状态，等待客户端发送信息
-            thread readDataThread(&MY_SOCKET::readData, this, the_client_sock);
-            readDataThread.detach();
         }
     }
     catch (exception e)
@@ -134,30 +204,7 @@ void MY_SOCKET::watchConnecting()
     }
 }
 
-void MY_SOCKET::readData(SOCKET client_sock)
-{
-    while (1)
-    {
-        // 没接收到信息的时候应该阻塞
-        int err = recv(client_sock, server_recv, MAXBYTE, 0);
-        if (err == SOCKET_ERROR)
-        {
-            cout << "服务端接收失败." << endl;
-            cout << endl;
-            return;
-        }
-        else
-        {
-            cout << "服务端接收到来自client " << client_sock << " 发送的消息，消息的内容是：" << endl;
-        }
-        for (int i = 0; i < strlen(server_recv); i++)
-        {
-            cout << server_recv[i];
-        }
-        cout << endl;
-        err = 0;
-    }
-}
+
 
 
 
