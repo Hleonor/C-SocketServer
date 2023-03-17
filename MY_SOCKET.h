@@ -17,14 +17,14 @@ class MY_SOCKET
 public:
     SOCKET serv_sock;
     // SOCKET client_sock;
-    vector<SOCKET> client_sock;
+    vector<SOCKET> client_sock_vector;
     vector<int> test_array;
 
     int creatASocket();
     int bindSocket2IPAndPort();
     int listenSocket();
     int acceptSocket();
-    void readData();
+    void readData(SOCKET a_client_sock);
     void sendData(char* buffer);
     void closeSocket();
     void startServer();

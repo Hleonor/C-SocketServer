@@ -7,7 +7,7 @@
 
 int MY_SOCKET::creatASocket()
 {
-    // ³õÊ¼»¯Ì×½Ó×Ö¿â
+    // åˆå§‹åŒ–å¥—æ¥å­—åº“
     WSADATA wsaData;
     int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (err != 0)
@@ -15,110 +15,62 @@ int MY_SOCKET::creatASocket()
         cout << "WSAStartup error" << endl;
         return -1;
     }
-    // ´´½¨Ì×½Ó×Ö
-    // ¹¹Ôìº¯ÊıµÄµÚÒ»¸ö²ÎÊıµÄº¬ÒåÊÇ£ºĞ­Òé×å£¬µÚ¶ş¸ö²ÎÊıÊÇÌ×½Ó×ÖÀàĞÍ£¬µÚÈı¸ö²ÎÊıÊÇĞ­ÒéÀàĞÍ
+    // åˆ›å»ºå¥—æ¥å­—
+    // æ„é€ å‡½æ•°çš„ç¬¬ä¸€ä¸ªå‚æ•°çš„å«ä¹‰æ˜¯ï¼šåè®®æ—ï¼Œç¬¬äºŒä¸ªå‚æ•°æ˜¯å¥—æ¥å­—ç±»å‹ï¼Œç¬¬ä¸‰ä¸ªå‚æ•°æ˜¯åè®®ç±»å‹
     serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serv_sock == INVALID_SOCKET)
     {
-        cout << "Ì×½Ó×Ö´´½¨Ê§°Ü" << endl;
+        cout << "å¥—æ¥å­—åˆ›å»ºå¤±è´¥" << endl;
         return -1;
     }
-    cout << "Ì×½Ó×Ö´´½¨³É¹¦" << endl;
+    cout << "å¥—æ¥å­—åˆ›å»ºæˆåŠŸ" << endl;
     return 0;
 }
 
 int MY_SOCKET::bindSocket2IPAndPort()
 {
-    struct sockaddr_in serv_addr; // ·şÎñÆ÷µØÖ·
-    memset(&serv_addr, 0, sizeof(serv_addr)); // Ã¿¸ö×Ö½Ú¶¼ÓÃ0Ìî³ä
-    serv_addr.sin_family = AF_INET; // Ê¹ÓÃIPv4µØÖ·
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // ¾ßÌåµÄIPµØÖ·£¬ÕâÀïÊ¹ÓÃ±¾»úIP
-    serv_addr.sin_port = htons(8888); // ¶Ë¿Ú£¬htonsº¯Êı½«Ö÷»ú×Ö½ÚĞò×ª»»ÎªÍøÂç×Ö½ÚĞò
-    int err = bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    struct sockaddr_in serv_addr; // æœåŠ¡å™¨åœ°å€
+    memset(&serv_addr, 0, sizeof(serv_addr)); // æ¯ä¸ªå­—èŠ‚éƒ½ç”¨0å¡«å……
+    serv_addr.sin_family = AF_INET; // ä½¿ç”¨IPv4åœ°å€
+    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // å…·ä½“çš„IPåœ°å€ï¼Œè¿™é‡Œä½¿ç”¨æœ¬æœºIP
+    serv_addr.sin_port = htons(8888); // ç«¯å£ï¼Œhtonså‡½æ•°å°†ä¸»æœºå­—èŠ‚åºè½¬æ¢ä¸ºç½‘ç»œå­—èŠ‚åº
+    int err = bind(serv_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
     if (err == -1)
     {
         cout << "bind error" << endl;
         return -1;
     }
-    cout << "°ó¶¨³É¹¦" << endl;
+    cout << "ç»‘å®šæˆåŠŸ" << endl;
     return 0;
 }
 
 int MY_SOCKET::listenSocket()
 {
-    // ½øÈë¼àÌı×´Ì¬£¬µÈ´ıÓÃ»§·¢ÆğÇëÇó
+    // è¿›å…¥ç›‘å¬çŠ¶æ€ï¼Œç­‰å¾…ç”¨æˆ·å‘èµ·è¯·æ±‚
     int err = listen(serv_sock, 20);
     if (err == -1)
     {
         cout << "listen error" << endl;
         return -1;
     }
-    cout << "¿ªÊ¼¼àÌı..." << endl;
+    cout << "å¼€å§‹ç›‘å¬..." << endl;
     return 0;
 }
 
 int MY_SOCKET::acceptSocket()
 {
     struct sockaddr_in client_addr;
-    int client_addr_size = sizeof(client_addr); // ¿Í»§¶ËµØÖ·½á¹¹Ìå´óĞ¡
-    int the_client_sock = accept(serv_sock, (struct sockaddr*)&client_addr, &client_addr_size); // ½ÓÊÕ¿Í»§¶ËÇëÇó
+    int client_addr_size = sizeof(client_addr); // å®¢æˆ·ç«¯åœ°å€ç»“æ„ä½“å¤§å°
+    int the_client_sock = accept(serv_sock, (struct sockaddr *) &client_addr, &client_addr_size); // æ¥æ”¶å®¢æˆ·ç«¯è¯·æ±‚
     if (the_client_sock == -1)
     {
         cout << "client_socket failed" << endl;
         return -1;
     }
-    client_sock.push_back(the_client_sock);
-    cout << "client_socket success, client info: "<< inet_ntoa(client_addr.sin_addr) << endl; // inet_ntoaº¯Êı½«ÍøÂç×Ö½ÚĞòIPµØÖ·×ª»»Îª×Ö·û´®
-    return 0;
+    cout << "client_socket success, client info: " << inet_ntoa(client_addr.sin_addr)
+         << endl; // inet_ntoaå‡½æ•°å°†ç½‘ç»œå­—èŠ‚åºIPåœ°å€è½¬æ¢ä¸ºå­—ç¬¦ä¸²
+    return the_client_sock;
 }
-
-void MY_SOCKET::readData()
-{
-    while (1)
-    {
-        // Ã»½ÓÊÕµ½ĞÅÏ¢µÄÊ±ºòÓ¦¸Ã×èÈû
-        int err = recv(client_sock, server_recv, MAXBYTE, 0);
-        if (err == SOCKET_ERROR)
-        {
-            cout << "·şÎñ¶Ë½ÓÊÕÊ§°Ü." << endl;
-            return ;
-        }
-        else
-        {
-            cout << "·şÎñ¶Ë½ÓÊÕ³É¹¦." << endl;
-        }
-        for (int i = 0; i < strlen(server_recv); i++)
-        {
-            cout << server_recv[i];
-        }
-        cout << endl;
-        err = 0;
-    }
-}
-
-void MY_SOCKET::sendData(char* buffer)
-{
-    while (1)
-    {
-        cout << "ÇëÊäÈëÒª·¢ËÍµÄĞÅÏ¢:";
-        server_send_change.clear();
-        cin >> server_send_change;
-        for (int i = 0; i < server_send_change.size(); i++)
-        {
-            server_send[i] = server_send_change[i];
-        }
-        if (send(serv_sock, server_send, server_send_change.length() + 1 + sizeof(char), 0) == SOCKET_ERROR)
-        {
-            cout << "·¢ËÍÊ§°Ü" << endl;
-        }
-        else
-        {
-            cout << "·¢ËÍ³É¹¦" << endl;
-        }
-    }
-}
-
-
 
 void MY_SOCKET::closeSocket()
 {
@@ -132,14 +84,69 @@ void MY_SOCKET::startServer()
     creatASocket();
     bindSocket2IPAndPort();
     listenSocket();
-    // ´´½¨Ò»¸öacceptSocketº¯ÊıµÄ¼àÌıÏß³Ì
+    // åˆ›å»ºä¸€ä¸ªacceptSocketå‡½æ•°çš„ç›‘å¬çº¿ç¨‹
     thread acceptSocketThread(&MY_SOCKET::watchConnecting, this);
     acceptSocketThread.detach();
 }
 
 void MY_SOCKET::watchConnecting()
 {
-
+    try
+    {
+        while (true)
+        {
+            int the_client_sock = acceptSocket();
+            if (the_client_sock == -1)
+            {
+                cout << "acceptSocket error" << endl;
+                return;
+            }
+            client_sock_vector.push_back(the_client_sock);
+            // å‘å®¢æˆ·ç«¯å‘é€ä¿¡æ¯ï¼Œä¸ç”¨åˆ›å»ºå‘é€çº¿ç¨‹ï¼Œç›´æ¥å‘é€å³å¯
+            char *server_send = "hello, client";
+            if (send(the_client_sock, server_send, strlen(server_send) + 1 + sizeof(char), 0) == SOCKET_ERROR)
+            {
+                cout << "å‘é€å¤±è´¥" << endl;
+            }
+            else
+            {
+                cout << "å‘é€æˆåŠŸ" << endl;
+            }
+            // å‘é€ç»“æŸåï¼Œè¿›å…¥ç›‘å¬çŠ¶æ€ï¼Œç­‰å¾…å®¢æˆ·ç«¯å‘é€ä¿¡æ¯
+            thread readDataThread(&MY_SOCKET::readData, this, the_client_sock);
+            readDataThread.detach();
+        }
+    }
+    catch (exception e)
+    {
+        cout << e.what() << endl;
+        cout << "watchConnecting error" << endl;
+    }
 }
+
+void MY_SOCKET::readData(SOCKET client_sock)
+{
+    while (1)
+    {
+        // æ²¡æ¥æ”¶åˆ°ä¿¡æ¯çš„æ—¶å€™åº”è¯¥é˜»å¡
+        int err = recv(client_sock, server_recv, MAXBYTE, 0);
+        if (err == SOCKET_ERROR)
+        {
+            cout << "æœåŠ¡ç«¯æ¥æ”¶å¤±è´¥." << endl;
+            return;
+        }
+        else
+        {
+            cout << "æœåŠ¡ç«¯æ¥æ”¶åˆ°æ¥è‡ªclient " << client_sock << " å‘é€çš„æ¶ˆæ¯ï¼Œæ¶ˆæ¯çš„å†…å®¹æ˜¯ï¼š" << endl;
+        }
+        for (int i = 0; i < strlen(server_recv); i++)
+        {
+            cout << server_recv[i];
+        }
+        cout << endl;
+        err = 0;
+    }
+}
+
 
 
